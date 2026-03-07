@@ -1,0 +1,120 @@
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getTotalPrice, removeAllItems } from "../../redux/slices/cartSlice";
+import { addOrder, updateTable } from "../../https/index";
+import { enqueueSnackbar } from "notistack";
+import { useMutation } from "@tanstack/react-query";
+import { removeCustomer } from "../../redux/slices/customerSlice";
+import Invoice from "../invoice/Invoice";
+
+const Bill = () => {
+  const dispatch = useDispatch();
+
+  const customerData = useSelector((state) => state.customer);
+  const cartData = useSelector((state) => state.cart);
+  const total = useSelector(getTotalPrice);
+
+  const taxRate = 5.25;
+  const tax = (total * taxRate) / 100;
+  const totalPriceWithTax = total + tax;
+
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [orderInfo, setOrderInfo] = useState();
+
+  const handlePlaceOrder = () => {
+    const orderData = {
+      customerDetails: {
+        name: customerData.customerName,
+        phone: customerData.customerPhone,
+        guests: customerData.guests,
+      },
+      orderStatus: "In Progress",
+      bills: {
+        total: total,
+        tax: tax,
+        totalWithTax: totalPriceWithTax,
+      },
+      items: cartData,
+      table: customerData.table.tableId,
+      paymentMethod: "Pending", // 🔥 Important
+    };
+
+    orderMutation.mutate(orderData);
+  };
+
+  const orderMutation = useMutation({
+    mutationFn: (reqData) => addOrder(reqData),
+    onSuccess: (resData) => {
+      const { data } = resData.data;
+      setOrderInfo(data);
+
+      const tableData = {
+        status: "Booked",
+        orderId: data._id,
+        tableId: data.table,
+      };
+
+      tableUpdateMutation.mutate(tableData);
+
+      enqueueSnackbar("Order Sent to Kitchen!", {
+        variant: "success",
+      });
+
+      setShowInvoice(true);
+    },
+  });
+
+  const tableUpdateMutation = useMutation({
+    mutationFn: (reqData) => updateTable(reqData),
+    onSuccess: () => {
+      dispatch(removeCustomer());
+      dispatch(removeAllItems());
+    },
+  });
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-5 mt-2">
+        <p className="text-xs text-[#ababab] font-medium mt-2">
+          Items ({cartData.length})
+        </p>
+        <h1 className="text-[#f5f5f5] text-md font-bold">
+          ₹{total.toFixed(2)}
+        </h1>
+      </div>
+
+      <div className="flex items-center justify-between px-5 mt-2">
+        <p className="text-xs text-[#ababab] font-medium mt-2">
+          Tax (5.25%)
+        </p>
+        <h1 className="text-[#f5f5f5] text-md font-bold">
+          ₹{tax.toFixed(2)}
+        </h1>
+      </div>
+
+      <div className="flex items-center justify-between px-5 mt-2">
+        <p className="text-xs text-[#ababab] font-medium mt-2">
+          Total With Tax
+        </p>
+        <h1 className="text-[#f5f5f5] text-md font-bold">
+          ₹{totalPriceWithTax.toFixed(2)}
+        </h1>
+      </div>
+
+      <div className="flex items-center gap-3 px-5 mt-4">
+        <button
+          onClick={handlePlaceOrder}
+          className="bg-[#f6b100] px-4 py-3 w-full rounded-lg text-[#1f1f1f] font-semibold text-lg"
+        >
+          Send Order
+        </button>
+      </div>
+
+      {showInvoice && (
+        <Invoice orderInfo={orderInfo} setShowInvoice={setShowInvoice} />
+      )}
+    </>
+  );
+};
+
+export default Bill;
