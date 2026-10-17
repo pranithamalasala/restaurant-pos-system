@@ -139,17 +139,7 @@ restaurant-pos-system/
 | `POST` | `/api/payments/create` | Initiate Razorpay payment |
 | `POST` | `/api/payments/verify` | Verify payment |
 
----
 
-## 📚 Resources
-
-- 🎬 [YouTube Tutorial Playlist](https://www.youtube.com/playlist?list=) — Follow the full build series
-- 📦 [Project Assets](https://drive.google.com/) — Google Drive assets
-- 🗺️ [Project Flowchart](https://www.figma.com/) — Architecture diagram
-- 🎨 [Design Reference](https://www.behance.net/) — Behance UI/UX inspiration
-- 📋 [Deployment Guide](DEPLOYMENT.md) — Step-by-step deployment instructions
-
----
 
 ## 🤝 Contributing
 
